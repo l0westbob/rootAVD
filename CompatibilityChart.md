@@ -3,17 +3,18 @@
 ## Current fork test status
 
 The original detailed chart below is historical. This fork has also been
-tested successfully up to API level 36.1 on the latest available revision
+tested successfully up to API level 37.0 on the latest available revision
 used during testing.
 
 | System image family | API level | CPU/ABI | Status | Notes |
 | --- | --- | --- | --- | --- |
+| Google Play Store | 37.0 | arm64-v8a | :heavy_check_mark: | Tested working |
 | Google Play Store | 36.1 | arm64-v8a | :heavy_check_mark: | Tested working |
 | Google Play Store | 36.1 | x86_64 | :heavy_check_mark: | Tested working |
 | Legacy 32-bit images | 24-30 | x86, armeabi-v7a | :question: | Not retested |
 
 32-bit AVD images are old and are expected to behave like the historical
-entries below, but they have not been revalidated in the API 36.1 pass.
+entries below, but they have not been revalidated in the current fork pass.
 
 ## Historical Google Play Store System Images
 

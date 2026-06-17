@@ -1,5 +1,17 @@
 # rootAVD fork
 
+## Compatibility
+
+| System image family | API level | CPU/ABI | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Google Play Store | 37.0 | arm64-v8a | :heavy_check_mark: | Tested working |
+| Google Play Store | 36.1 | arm64-v8a | :heavy_check_mark: | Tested working |
+| Google Play Store | 36.1 | x86_64 | :heavy_check_mark: | Tested working |
+| Legacy 32-bit images | 24-30 | x86, armeabi-v7a | :question: | Not retested in this fork |
+
+See [CompatibilityChart.md](CompatibilityChart.md) for the historical upstream
+matrix and notes.
+
 This fork is maintained for private/local Android Studio AVD workflows. The
 upstream project moved to GitLab on 24 Oct 2023:
 [rootAVD](https://gitlab.com/newbit/rootAVD).
@@ -11,11 +23,11 @@ but the Unix implementation has been split into focused modules under
 
 Current fork status:
 
+* API level 37.0 Google Play Store `arm64-v8a` has been tested successfully.
 * API level 36.1 Google Play Store `arm64-v8a` has been smoke-tested with the
   modular source checkout: patch, cold boot, Magisk launch, restore, and
   post-restore `su` failure were verified.
-* API level 36.1 Google Play Store `x86_64` remains the next required live
-  smoke before claiming the rewrite is fully validated for both tested ABIs.
+* API level 36.1 Google Play Store `x86_64` has been tested successfully.
 * Generated bundle patch flow remains to be smoke-tested from a bundle-only
   directory before publishing a single-file release artifact.
 * Historical and specialized features such as `FAKEBOOTIMG`, `PATCHFSTAB`,
@@ -88,7 +100,7 @@ ADB Path | Ramdisk DIR| ANDROID_HOME:
                                         can be overwritten by setting the ANDROID_HOME variable.
                                         e.g. set ANDROID_HOME=%USERPROFILE%\Downloads\sdk
 
-        $API:                           25,29,30,31,32,33,34,35,36,36.1,etc.
+        $API:                           25,29,30,31,32,33,34,35,36,36.1,37.0,etc.
 
 Options:
         restore                         restore all existing .backup files, but doesn't delete them
@@ -279,7 +291,8 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 * Magisk Versions >= 26.x can only be proper installed with the FAKEBOOTIMG argument
 	* due to the [New sepolicy.rule Implementation](https://github.com/topjohnwu/Magisk/releases/tag/v26.1)
 * Android 14 and newer need Magisk Version >= 26.x to be rooted
-* This fork has been tested up to API level 36.1 on arm64-v8a and x86_64
+* This fork has been tested up to API level 37.0 on Google Play Store arm64-v8a
+* API level 36.1 has been tested on Google Play Store arm64-v8a and x86_64
 * Legacy 32-bit images are expected to work, but were not retested
 
 ### Notes on Magisk Versions
@@ -310,13 +323,13 @@ for the current automated proof and remaining manual release evidence.
 Minimum evidence for this fork's normal AVD workflow:
 
 * `tools/check.sh` passes.
-* Source checkout patch flow succeeds on API 36.1 Google Play Store
+* Source checkout patch flow succeeds on API 37.0 or 36.1 Google Play Store
   `arm64-v8a`.
 * The patched AVD cold-boots and Magisk launches.
 * `restore` makes `ramdisk.img` byte-identical to `ramdisk.img.backup`.
 * After a cold boot from the restored ramdisk, `adb shell su -c id` fails.
 * Repeat the same patch, Magisk launch, restore, and post-restore `su` check on
-  API 36.1 Google Play Store `x86_64`.
+  API 36.1 Google Play Store `x86_64` when validating both tested ABIs.
 * Build the generated bundle and repeat one normal patch flow from a
   bundle-only directory.
 
@@ -335,7 +348,7 @@ Optional/manual feature evidence:
 * Run `tools/build-rootavd-bundle.sh` and `dist/rootAVD.sh ListAllAVDs`.
 * Push both source-mode payload and generated bundle to an AVD and run `sh rootAVD.sh SOURCING DEBUG` to verify Android shell loading.
 * Run `./rootAVD.sh InstallApps` with no APK files in `Apps/` to smoke-test ADB without installing packages.
-* Smoke-test API 36.1 Google Play Store arm64-v8a and x86_64 AVDs before tagging a release.
+* Smoke-test API 37.0 Google Play Store arm64-v8a and API 36.1 Google Play Store x86_64 AVDs before tagging a release.
 * Smoke-test `InstallApps`, `FAKEBOOTIMG`, `PATCHFSTAB`, `InstallKernelModules`, and `InstallPrebuiltKernelModules` when the matching local fixtures or online AVD are available.
 * Smoke-test `BLUESTACKS` and `rootAVD.bat` on their real target platforms when available.
 
@@ -437,6 +450,7 @@ Optional/manual feature evidence:
 
 * API level 36.1 Google Play Store system images work on arm64-v8a
 * API level 36.1 Google Play Store system images work on x86_64
+* API level 37.0 Google Play Store system images work on arm64-v8a
 * 32-bit x86 and armeabi-v7a images have not been retested in this pass
 
 <details>
