@@ -313,7 +313,7 @@ UpdateBusyBoxToScript() {
     for file in libbusybox*.so; do
         [ -e "$file" ] || continue
         chmod +x "$file"
-        cp -fF "$file" "$BB"
+        cp -f "$file" "$BB"
         if "$BB" > /dev/null 2>&1; then
             echo "[!] Found a working busybox Binary: $file"
             echo "[!] $("$BB" | "$BB" head -n 1)"
@@ -346,7 +346,7 @@ CopyBusyBox() {
     # 		$BB >/dev/null 2>&1 && return || cp -f $BASEDIR/lib/$ARCH32/libbusybox.so $BB >/dev/null 2>&1
     # 		$BB >/dev/null 2>&1 && return || cp -f $BASEDIR/lib/$ARCH/libbusybox.so $BB >/dev/null 2>&1
     # 	fi
-    cp -fF "$WorkingBusyBox" "$BB" > /dev/null 2>&1
+    cp -f "$WorkingBusyBox" "$BB" > /dev/null 2>&1
     chmod +x "$BB"
 }
 

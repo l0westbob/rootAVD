@@ -305,6 +305,9 @@ SCRIPT
   cat > "$bin/gzip" <<'SCRIPT'
 #!/usr/bin/env bash
 printf 'ARGS=%s\n' "$*" >> "$GZIP_LOG"
+src="${!#}"
+dst="${src%.gz}"
+cp "$src" "$dst"
 SCRIPT
   chmod +x "$base/magiskboot" "$bin/gzip"
 
