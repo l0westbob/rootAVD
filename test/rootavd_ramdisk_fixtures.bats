@@ -313,9 +313,9 @@ SCRIPT
 
   run bash -c '
     SOURCING=true source "$1" SOURCING
-    export MAGISKBOOT_LOG="$7"
-    export GZIP_LOG="$8"
-    PATH="$9:$PATH"
+    export MAGISKBOOT_LOG="$6"
+    export GZIP_LOG="$7"
+    PATH="$8:$PATH"
     BASEDIR="$2"
     TMP="$3"
     RDF="$4"
