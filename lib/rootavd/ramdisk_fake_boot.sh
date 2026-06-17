@@ -7,8 +7,7 @@ runMagisk_to_Patch_fake_boot_img() {
     echo "[*] Install/Patch $FBI and hit Enter when done(max. 60s)"
     read -r -t 60 proceed
     case $proceed in
-        *)
-            ;;
+        *) ;;
     esac
 }
 
