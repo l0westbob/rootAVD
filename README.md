@@ -1,7 +1,28 @@
-# This Repo will be archived at the 24th of Oct 2023
-# Due to the forced 2FA Mumbo Jumbo from GitHub,
-# this Repo has moved to GitLab
-# [rootAVD](https://gitlab.com/newbit/rootAVD)
+# rootAVD fork
+
+This fork is maintained for private/local Android Studio AVD workflows. The
+upstream project moved to GitLab on 24 Oct 2023:
+[rootAVD](https://gitlab.com/newbit/rootAVD).
+
+The fork preserves the public `rootAVD.sh` and `rootAVD.bat` command interface,
+but the Unix implementation has been split into focused modules under
+`lib/rootavd/`. A single-file release artifact can still be generated with
+`tools/build-rootavd-bundle.sh`.
+
+Current fork status:
+
+* API level 36.1 Google Play Store `arm64-v8a` has been smoke-tested with the
+  modular source checkout: patch, cold boot, Magisk launch, restore, and
+  post-restore `su` failure were verified.
+* API level 36.1 Google Play Store `x86_64` remains the next required live
+  smoke before claiming the rewrite is fully validated for both tested ABIs.
+* Generated bundle patch flow remains to be smoke-tested from a bundle-only
+  directory before publishing a single-file release artifact.
+* Historical and specialized features such as `FAKEBOOTIMG`, `PATCHFSTAB`,
+  kernel-module replacement, `BLUESTACKS`, and Windows wrapper execution should
+  be treated as optional/manual evidence unless they are part of the target use
+  case.
+
 ### [newbit @ xda-developers](https://forum.xda-developers.com/m/newbit.1350876)
 A Script to...
 * root your Android Studio Virtual Device (AVD), with Magisk (Stable, Canary or Alpha)
@@ -14,29 +35,21 @@ A Script to...
 
 ## Install Magisk
 ### Download rootAVD via
-* [Click](https://github.com/newbit1/rootAVD/archive/refs/heads/master.zip)
-* `git clone https://github.com/newbit1/rootAVD.git`
+* [Click](https://gitlab.com/newbit/rootAVD/-/archive/master/rootAVD-master.zip)
+* `git clone https://gitlab.com/newbit/rootAVD.git`
 
 ### Preconditions
 * the AVD is running
 * a working Internet connection for the Menu
 * a command prompt / terminal is opened
 * `adb shell` will connect to the running AVD
+
 ### Use Case Examples
-#### on MacOS
-<img src="https://github.com/newbit1/video-files/blob/master/rootAVD_MacOS.gif" width="50%" height="50%"/>
-
-#### BlueStacks 4 on MacOS
-<img src="https://github.com/newbit1/video-files/blob/master/rootAVD_MacOS_BlueStacks.gif" width="50%" height="50%"/>
-
-#### on Windows
-<img src="https://github.com/newbit1/video-files/blob/master/rootAVD_Windows.gif" width="50%" height="50%"/>
-
-#### on Linux
-<img src="https://github.com/newbit1/video-files/blob/master/rootAVD_Linux.gif" width="50%" height="50%"/>
-
-#### Fake Boot.img on MacOS
-<img src="https://github.com/newbit1/video-files/blob/master/rootAVD_MacOS_FAKEBOOTIMG.gif" width="50%" height="50%"/>
+* [on MacOS](https://gitlab.com/newbit/video-files/-/blob/master/rootAVD_MacOS.gif)
+* [BlueStacks 4 on MacOS](https://gitlab.com/newbit/video-files/-/blob/master/rootAVD_MacOS_BlueStacks.gif)
+* [on Windows](https://gitlab.com/newbit/video-files/-/blob/master/rootAVD_Windows.gif)
+* [on Linux](https://gitlab.com/newbit/video-files/-/blob/master/rootAVD_Linux.gif)
+* [Fake Boot.img on MacOS](https://gitlab.com/newbit/video-files/-/blob/master/rootAVD_MacOS_FAKEBOOTIMG.gif)
 
 ### How to Install ADB (Android SDK Platform-Tools)
 * Open Android Studio -> SDK Manager -> Android SDK -> SDK Tools -> Check on **Android SDK Platform-Tools** -> Apply
@@ -75,7 +88,7 @@ ADB Path | Ramdisk DIR| ANDROID_HOME:
                                         can be overwritten by setting the ANDROID_HOME variable.
                                         e.g. set ANDROID_HOME=%USERPROFILE%\Downloads\sdk
 
-        $API:                           25,29,30,31,32,33,34,UpsideDownCake,etc.
+        $API:                           25,29,30,31,32,33,34,35,36,36.1,etc.
 
 Options:
         restore                         restore all existing .backup files, but doesn't delete them
@@ -209,7 +222,12 @@ rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img re
 rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img InstallKernelModules
 rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img InstallPrebuiltKernelModules
 rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img InstallPrebuiltKernelModules GetUSBHPmodZ PATCHFSTAB DEBUG
+rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img AddRCscripts
+rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img toggleRamdisk
+rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img UpdateBusyBoxScript
 ```
+
+`BLUESTACKS` is supported by `rootAVD.sh` on macOS, not by `rootAVD.bat`.
 
 <details>
 <summary>Command Examples: for ALL installed AVDs</summary>
@@ -222,6 +240,9 @@ rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img re
 rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img InstallKernelModules
 rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img InstallPrebuiltKernelModules
 rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img InstallPrebuiltKernelModules GetUSBHPmodZ PATCHFSTAB DEBUG
+rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img AddRCscripts
+rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img toggleRamdisk
+rootAVD.bat system-images\android-33\google_apis_playstore\x86_64\ramdisk.img UpdateBusyBoxScript
 
 rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img
 rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img FAKEBOOTIMG
@@ -230,6 +251,9 @@ rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img re
 rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img InstallKernelModules
 rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img InstallPrebuiltKernelModules
 rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img InstallPrebuiltKernelModules GetUSBHPmodZ PATCHFSTAB DEBUG
+rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img AddRCscripts
+rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img toggleRamdisk
+rootAVD.bat system-images\android-25\google_apis_playstore\x86_64\ramdisk.img UpdateBusyBoxScript
 
 rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img
 rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img FAKEBOOTIMG
@@ -238,12 +262,15 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img InstallKernelModules
 rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img InstallPrebuiltKernelModules
 rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img InstallPrebuiltKernelModules GetUSBHPmodZ PATCHFSTAB DEBUG
+rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img AddRCscripts
+rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img toggleRamdisk
+rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.img UpdateBusyBoxScript
 ```
 </details>
 
 ### Notes
 * 64 Bit Only Systems needs Magisk 23.x
-* In the Menu, you can choose between the newest Magisk, Canary, Stable and Alpha, Version.
+* In the Menu, you can choose between the newest Magisk, Canary and Stable, Version.
 * With the new Option `s`, you can see and download any other Versions of Magisk
 * Once choosen, the script will make that Version to your local one.
 * Prebuilt Kernel and Modules will be pulled from [AOSP](https://android.googlesource.com/kernel/prebuilts)
@@ -251,12 +278,76 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 * API 28 (Pie) is **not supported** at all -> [because](https://source.android.com/devices/bootloader/partitions/system-as-root#sar-partitioning)
 * Magisk Versions >= 26.x can only be proper installed with the FAKEBOOTIMG argument
 	* due to the [New sepolicy.rule Implementation](https://github.com/topjohnwu/Magisk/releases/tag/v26.1)
-* Android 14 needs Magisk Version >= 26.x to be rooted
+* Android 14 and newer need Magisk Version >= 26.x to be rooted
+* This fork has been tested up to API level 36.1 on arm64-v8a and x86_64
+* Legacy 32-bit images are expected to work, but were not retested
+
+### Notes on Magisk Versions
+* Replace the Magisk.zip with the Flavour/Version of your choice
+* Tested Flavours are:
+	* Magisk from [topjohnwu](https://github.com/topjohnwu/magisk-files)
+	* Magisk Alpha from [vvb2060](https://xdaforums.com/t/discussion-magisk-alpha-public-released-fork-vvb2060.4424845/)
+	* Kitsune Magisk / Delta from [huskydg](https://github.com/HuskyDG/magisk-files/releases)
+
+### Contributor Workflow
+* `rootAVD.sh` is now the public loader; implementation modules live in `lib/rootavd/`.
+* Normal user commands stay unchanged, for example `./rootAVD.sh ListAllAVDs`.
+* Run local checks with `tools/check.sh`; this covers syntax checks, ShellCheck style severity, first-party shfmt formatting, whitespace checks, bundle generation, non-destructive source/bundle smoke, and Bats tests.
+* GitHub Actions runs the same gate from `.github/workflows/check.yml`.
+* Build a single-file release script with `tools/build-rootavd-bundle.sh`; output is written to `dist/rootAVD.sh`.
+* Run non-destructive source/bundle smoke checks with `tools/smoke-nondestructive.sh`; this also verifies `restore` and `toggleRamdisk` against a temporary SDK tree.
+* With one AVD connected, run non-destructive Android shell loader smoke with `tools/smoke-adb-load.sh`.
+* Keep ordinary modules in `lib/rootavd/` free of `shellcheck disable` comments; only `lib/rootavd/bluestacks_loader_template.sh` carries generated-template suppressions.
+* `lib/rootavd/bluestacks_loader_template.sh` is intentionally excluded from shfmt because snapshot tests guard its generated shell text.
+* `Magisk.zip` can still be replaced locally with the Magisk flavor/version of your choice.
+
+### Release Smoke Checklist
+See [docs/manual-smoke.md](docs/manual-smoke.md) for the full release checklist
+and [docs/manual-smoke-results-template.md](docs/manual-smoke-results-template.md)
+for the results template. See [docs/refactor-status.md](docs/refactor-status.md)
+for the current automated proof and remaining manual release evidence.
+
+Minimum evidence for this fork's normal AVD workflow:
+
+* `tools/check.sh` passes.
+* Source checkout patch flow succeeds on API 36.1 Google Play Store
+  `arm64-v8a`.
+* The patched AVD cold-boots and Magisk launches.
+* `restore` makes `ramdisk.img` byte-identical to `ramdisk.img.backup`.
+* After a cold boot from the restored ramdisk, `adb shell su -c id` fails.
+* Repeat the same patch, Magisk launch, restore, and post-restore `su` check on
+  API 36.1 Google Play Store `x86_64`.
+* Build the generated bundle and repeat one normal patch flow from a
+  bundle-only directory.
+
+Optional/manual feature evidence:
+
+* `PATCHFSTAB`: verify the patched ramdisk contains the expected
+  `overlay.d/vendor/etc/fstab.ranchu` addition.
+* `FAKEBOOTIMG`: verify the Magisk app can patch `/sdcard/Download/fakeboot.img`
+  and the script can extract the patched ramdisk.
+* `GetUSBHPmodZ`, `AddRCscripts`, kernel-module workflows, `BLUESTACKS`, and the
+  Windows wrapper should be tested only when those workflows are in scope.
+
+* Run `./rootAVD.sh ListAllAVDs` from a source checkout.
+* Run `tools/smoke-nondestructive.sh` to compare source and bundle `ListAllAVDs` output.
+* Run `tools/smoke-adb-load.sh` to verify source and bundle payload loading through `adb shell sh`.
+* Run `tools/build-rootavd-bundle.sh` and `dist/rootAVD.sh ListAllAVDs`.
+* Push both source-mode payload and generated bundle to an AVD and run `sh rootAVD.sh SOURCING DEBUG` to verify Android shell loading.
+* Run `./rootAVD.sh InstallApps` with no APK files in `Apps/` to smoke-test ADB without installing packages.
+* Smoke-test API 36.1 Google Play Store arm64-v8a and x86_64 AVDs before tagging a release.
+* Smoke-test `InstallApps`, `FAKEBOOTIMG`, `PATCHFSTAB`, `InstallKernelModules`, and `InstallPrebuiltKernelModules` when the matching local fixtures or online AVD are available.
+* Smoke-test `BLUESTACKS` and `rootAVD.bat` on their real target platforms when available.
 
 ### ANDROID_HOME
 * Default location can be overwritten by setting the `ANDROID_HOME` variable
 * In both cases, the script will search in it for AVD system-images and adb binarys
 * `ANDROID_HOME` Sets the path to the SDK installation directory -> [AOSP Variables reference](https://developer.android.com/tools/variables#envar)
+
+### Notes for Microsoft Visual Studio AVDs
+* `ANDROID_HOME` needs to be set properly i.e. `set ANDROID_HOME="C:\Program Files (x86)\Android\android-sdk"`
+* `"C:\Program Files (x86)\Android\android-sdk"` needs elevated write permissions
+* the script will ask for user permissions, every time it needs to write to those locations
 
 ### Notes for Apk Developers
 * [How-To SU](http://su.chainfire.eu) from [Chainfire's](https://github.com/Chainfire) [libsuperuser](https://github.com/Chainfire/libsuperuser) - Guidelines for problem-free su usage (for Android Developers)
@@ -281,13 +372,20 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 * Confirmation
 	* On the Bottom Left Corner reads: **Safe mode**
 
+### Android TV Notes
+* An extra File Manager APK is required
+* Due to lack of functionality of the Android TV OS, special permissions are granted during
+* runtime, to all 3rd party installed APKs -> `appops set <package_name> MANAGE_EXTERNAL_STORAGE allow`
+* the Magisk APK doesn't show up in the Apps location
+	* but you can start Magisk from Terminal via `adb shell monkey -p com.topjohnwu.magisk -c android.intent.category.LAUNCHER 1`
+
 ### Automotive Notes
 * After patching the ramdisk.img and cycle power, switch to user 0 via `adb shell am switch-user 0`
 	* open the Magisk App and the **Requires Additional Setup** pops up -> reboot AVD
 	* switch again to user 0
 		* open the Magisk App -> Settings -> Multiuser Mode -> **User-Independent** -> reboot AVD
 * Every time you want to Grant Su Permissions, switch to user 0 and then back to 10 `adb shell am switch-user 10`
-* Alternative, you can install the Module [Magisk Single User Mod](https://github.com/newbit1/msum)
+* Alternative, you can install the Module [Magisk Single User Mod](https://gitlab.com/newbit/msum)
 	* and remove all user higher than 0 i.e. `adb shell pm remove-user 13` or `adb shell pm remove-user 10`
 
 ### BlueStacks 4 Notes on MacOs
@@ -300,9 +398,9 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 
 ### Links
 * [XDA [GUIDE] Build / Mod AVD Kernel Android 10 / 11 rootAVD [Magisk] [USB passthrough Linux] [Google Play Store API]](https://forum.xda-developers.com/t/guide-build-mod-avd-kernel-android10-x86_64-29-root-magisk-usb-passthrough-linux.4212719)
-* [Inject Android Hardware USB HOST Permissions](https://github.com/newbit1/usbhostpermissons)
+* [Inject Android Hardware USB HOST Permissions](https://gitlab.com/newbit/usbhostpermissons)
 * [XDA [SCRIPT] rootAVD - root your Android Studio Virtual Device emulator with Magisk [Android 12][Linux][Darwin/MacOS][WIN][Google Play Store APIs]](https://forum.xda-developers.com/t/script-rootavd-root-your-android-studio-virtual-device-emulator-with-magisk-android-11-linux-darwin-macos-win-google-play-store-apis.4218123)
-* [rootCROS - A Script to root your Google Chrome OS installed on a non Chromebook Device](https://github.com/newbit1/rootCROS)
+* [rootCROS - A Script to root your Google Chrome OS installed on a non Chromebook Device](https://gitlab.com/newbit/rootCROS)
 
 ### XDA [GUIDE] How to [Build|Mod|Update] a custom AVD Kernel and its Modules
 * [[GUIDE][Build|Mod|Update][kernel-ranchu][goldfish][5.4][5.10][GKI][ramdisk.img][modules][rootAVD][Android 11(R) 12(S)][AVD][Google Play Store API]](https://forum.xda-developers.com/t/guide-build-mod-update-kernel-ranchu-goldfish-5-4-5-10-gki-ramdisk-img-modules-rootavd-android-11-r-12-s-avd-google-play-store-api.4220697)
@@ -334,6 +432,13 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 	```
 
 ### [Compatibility Chart](CompatibilityChart.md)
+
+#### Current fork test status
+
+* API level 36.1 Google Play Store system images work on arm64-v8a
+* API level 36.1 Google Play Store system images work on x86_64
+* 32-bit x86 and armeabi-v7a images have not been retested in this pass
+
 <details>
 <summary>Archive</summary>
 ### Magisk v23.0 Alpha Successfully tested with Stock Kernel on
@@ -374,18 +479,34 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 </details>
 
 ### Change Logs
+#### [Oct 2024]
+* [rootAVD.sh] - Added Support for LD_PRELOAD of init
+* [General] - Updated to Magisk v26.4
+* [rootAVD.sh] - Removed Magisk Alpha as it moved to App Center and TG
 
+#### [March 2024]
+* [rootAVD.sh] - Added MANAGE_EXTERNAL_STORAGE allow
+* [rootAVD.sh] - Added PREINITDEVICE config
+* [rootAVD.bat] - Added support for elevated write permissions
+
+<details>
+<summary>Archive</summary>
+
+### Change Logs
+#### [December 2023]
+* [rootAVD.sh] - Fixed GetUSBHPmod Download Links and typos
+#### [November 2023]
+* [rootAVD.bat] - Fixed another space issue
+#### [October 2023]
+* [General] - Moved to GitLab
 #### [August 2023]
-
 * [rootAVD.sh] - Added Pagesize Padding in the fakeboot.img
 * [rootAVD.sh] - Updated the creation of the fakeboot.img
 * [rootAVD.sh] - Added another way of checking the AVDs Internet connection
-
 #### [July 2023]
 * [rootAVD.bat] - Fixed file ListAllAVDs not found bug
 * [rootAVD.bat] - Fixed some errors with double spaces
 * [rootAVD.bat] - Added TestADBWORKDIR routine
-
 #### [June 2023]
 * [rootAVD.sh] - improved finding BusyBox routine, and once again
 * [rootAVD.sh] - rewritten the file and folder handling entirely, Darwin and Linux
@@ -396,10 +517,8 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 * [rootAVD.bat] - updated the TestADB routine, adb path will now be set automatically
 * [rootAVD.bat] - updated Exit calls
 * [General] - updated the README.md
-
 #### [May 2023]
 * [rootAVD.sh] - removed Busybox from Script
-
 #### [April 2023]
 * [General] - added link to X-plore file manager
 * [General] - added link to Magisk Single User Mod
@@ -408,11 +527,6 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 * [rootAVD.sh] - changed return 1 to return 0
 * [rootAVD.sh] - changed copy and move routine
 * [rootAVD.sh] - added support for ramdisk-qemu.img
-
-<details>
-<summary>Archive</summary>
-
-### Change Logs
 #### [December 2022]
 * [rootAVD.sh] - Fixed arithmetic syntax error in decompress_ramdisk
 #### [November 2022]
@@ -502,14 +616,14 @@ rootAVD.bat system-images\android-25\google_apis_playstore\armeabi-v7a\ramdisk.i
 * [shakalaca MagiskOnEmulator](https://github.com/shakalaca/MagiskOnEmulator)
 * [huskydg @ xda-developers](https://forum.xda-developers.com/m/huskydg.11455139)
 * [huskydg MagiskOnEmu](https://github.com/HuskyDG/MagiskOnEmu)
+* [huskydg Kitsune Magisk Delta](https://github.com/HuskyDG/magisk-files/releases)
 * [Akianonymus _json_value](https://gist.github.com/cjus/1047794#gistcomment-3313785)
 * [Tad Fisher Android Nixpkgs](https://github.com/tadfisher/android-nixpkgs)
 * [Sébastien Corne magisk-single-user](https://github.com/seebz)
 * [remote-android Native Bridge Support in ReDroid](https://github.com/remote-android/redroid-doc/tree/master/native_bridge)
-* [vvb2060 Magisk Alpha](https://github.com/vvb2060/magisk_files/)
+* [vvb2060 Magisk Alpha](https://xdaforums.com/t/discussion-magisk-alpha-public-released-fork-vvb2060.4424845/)
 * [All-in-one Markdown editor by terrylinooo](https://markdown-editor.github.io/)
 * [Online Free WYSIWYG HTML Editor](https://www.htmeditor.com/author/)
 * [HTML Tidy - Online Markup Corrector](https://htmltidy.net)
 * [ffmpeg + ImageMagick. Convert video to GIF by using Terminal.app in macOS](https://acronis.design/ffmpeg-imagemagick-convert-video-to-gif-using-the-terminal-app-in-macos-657948adf900)
 * [Kazam Screencaster](https://launchpad.net/kazam)
-

@@ -32,9 +32,20 @@ IF %DEBUG% (
 	echo InstallPrebuiltKernelModules=%InstallPrebuiltKernelModules%
 	echo ListAllAVDs=%ListAllAVDs%
 	echo InstallApps=%InstallApps%
+	echo UpdateBusyBoxScript=%UpdateBusyBoxScript%
+	echo AddRCscripts=%AddRCscripts%
+	echo BLUESTACKS=%BLUESTACKS%
+	echo toggleRamdisk=%toggleRamdisk%
+	echo SOURCING=%SOURCING%
+	echo FAKEBOOTIMG=%FAKEBOOTIMG%
 	echo NOPARAMSATALL=%NOPARAMSATALL%
+	echo COPYASADMIN=%COPYASADMIN%
 )
 
+IF %BLUESTACKS% (
+	echo [^^!] BLUESTACKS is supported by rootAVD.sh on macOS, not rootAVD.bat
+	exit /B 1
+)
 
 IF NOT %InstallApps% (
 	REM If there is no file to work with, abort the script
@@ -58,6 +69,8 @@ for /F "delims=" %%i in ("%AVDPATHWITHRDFFILE%") do (
 	set RDFFILE=%%~nxi
 )
 
+call :testWritePerm %RDFFILE%
+
 REM If we can CD into the ramdisk.img, it is not a file!
 cd %AVDPATHWITHRDFFILE% >nul 2>&1
 IF "%ERRORLEVEL%"=="0" (
@@ -66,6 +79,10 @@ IF "%ERRORLEVEL%"=="0" (
 
 IF %restore% (
 	call :restore_backups && exit /B 0
+)
+
+IF %toggleRamdisk% (
+	call :toggle_Ramdisk && exit /B 0
 )
 
 call :TestADB
@@ -123,25 +140,57 @@ IF %RAMDISKIMG% (
 			call :pushtoAVD "%INITRAMFS%"
 		)
 	)
+
+	IF %AddRCscripts% (
+		for %%i in (*.rc) do (
+			call :pushtoAVD "%%i"
+		)
+		IF EXIST "%ROOTAVD%\sbin" (
+			call :pushtoAVD "%ROOTAVD%\sbin"
+		)
+	)
 )
 
 echo [-] Copy rootAVD Script into Magisk DIR
 adb push rootAVD.sh %ADBBASEDIR%
+
+IF EXIST "lib\rootavd" (
+	echo [-] Copy rootAVD modules into Magisk DIR
+	adb shell mkdir -p %ADBBASEDIR%/lib
+	adb push lib\rootavd %ADBBASEDIR%/lib/
+)
+
+IF %UpdateBusyBoxScript% (
+	call :pushtoAVD "libbusybox*.so"
+)
 
 echo [-] run the actually Boot/Ramdisk/Kernel Image Patch Script
 echo [*] from Magisk by topjohnwu and modded by NewBit XDA
 adb shell sh %ADBBASEDIR%/rootAVD.sh %*
 
 IF "%ERRORLEVEL%"=="0" (
+	IF %UpdateBusyBoxScript% (
+		call :pullfromAVD bbscript.sh "%ROOTAVD%\rootAVD.sh"
+		exit /B 0
+	)
+
 	REM In Debug-Mode we can skip parts of the script
 	IF NOT %DEBUG% (
 		IF %RAMDISKIMG% (
-			call :pullfromAVD ramdiskpatched4AVD.img "%AVDPATHWITHRDFFILE%"
-			call :pullfromAVD Magisk.apk %ROOTAVD%\Apps\
+
+			IF %COPYASADMIN% (
+				call :pullfromAVD ramdiskpatched4AVD.img
+				powershell.exe -Command "Start-Process -Wait cmd '/c copy """"%ROOTAVD%\ramdiskpatched4AVD.img"""" """"%AVDPATHWITHRDFFILE%""""' -Verb RunAs"
+				del /Q ramdiskpatched4AVD.img
+			) ELSE (
+				call :pullfromAVD ramdiskpatched4AVD.img "%AVDPATHWITHRDFFILE%"
+			)
+
+			call :pullfromAVD Magisk.apk "%ROOTAVD%" Apps
 			call :pullfromAVD Magisk.zip
 
 			IF %InstallPrebuiltKernelModules% (
-				call :pullfromAVD %BZFILE%
+				call :pullfromAVD "%BZFILE%"
 				call :InstallKernelModules
 			)
 
@@ -190,7 +239,7 @@ exit /B 0
 	del tmpFile
 
 	echo.%ADBPULLECHO%| FIND /I "error">Nul || (
-  		echo [-] Trying to shut down the AVD
+		echo [-] Trying to shut down the AVD
 	)
 	echo [^^!] If the AVD doesnt shut down, try it manually^^!
 
@@ -202,7 +251,13 @@ exit /B 0
 	IF EXIST "%BZFILE%" (
 		call :create_backup %KRFILE%
 		echo [*] Copy %BZFILE% ^(Kernel^) into kernel-ranchu
-		copy "%BZFILE%" "%AVDPATH%%KRFILE%" >Nul
+
+		IF %COPYASADMIN% (
+			echo [^^!] with elevated write permissions
+			powershell.exe -Command "Start-Process -Wait cmd '/c copy """"%BZFILE%"""" """"%AVDPATH%%KRFILE%""""' -Verb RunAs"
+		) ELSE (
+			copy "%BZFILE%" "%AVDPATH%%KRFILE%" >Nul 2>&1
+		)
 
 		IF "%ERRORLEVEL%"=="0" (
 			del "%BZFILE%" "%INITRAMFS%"
@@ -215,6 +270,7 @@ exit /B 0
 	SetLocal EnableDelayedExpansion
 	set SRC=%1
 	set DST=%2
+	set DST2=%3
 	set ADBPULLECHO=
 
 	setlocal enableDelayedExpansion
@@ -229,13 +285,22 @@ exit /B 0
 		set "DST=%%~nxi"
 	)
 
-	adb pull %ADBBASEDIR%/%SRC% %2 > tmpFile 2>&1
+	IF NOT "%DST2%"=="" (
+		adb pull %ADBBASEDIR%/%SRC% %DST2% > tmpFile 2>&1
+		set "DST=%DST2%"
+	)ELSE (
+		IF "%DST%"=="" (
+			adb pull %ADBBASEDIR%/%SRC% > tmpFile 2>&1
+		)
+		adb pull %ADBBASEDIR%/%SRC% %2 > tmpFile 2>&1
+	)
+
 	set /P ADBPULLECHO=<tmpFile
 	del tmpFile
 
 	echo.%ADBPULLECHO%| FIND /I "error">Nul || (
-  		echo [*] Pull %SRC% into %DST%
-  		echo [-] %ADBPULLECHO%
+		echo [*] Pull %SRC% into %DST%
+		echo [-] %ADBPULLECHO%
 	)
 	EndLocal
 exit /B 0
@@ -272,16 +337,42 @@ exit /B 0
 	ENDLOCAL
 exit /B 0
 
+:testWritePerm
+	set FILE=%1
+	set TEMPFILE=%FILE%.temp
+
+	echo [*] Testing for write permissions
+	echo [-] creating TEMPFILE File
+	copy "%AVDPATH%%FILE%" "%AVDPATH%%TEMPFILE%" >Nul 2>&1
+	IF NOT "%ERRORLEVEL%"=="0" (
+		set COPYASADMIN=%true%
+		echo [^!] elevated write permissions are needed to access ^$ANDROID_HOME
+	)
+
+	IF NOT %COPYASADMIN% (
+		echo [-] deleating TEMPFILE File
+		echo [^^!] NO elevated write permissions are needed to access ^$ANDROID_HOME
+		del /Q "%AVDPATH%%TEMPFILE%"
+	)
+exit /B 0
+
+
 :create_backup
 	SetLocal EnableDelayedExpansion
 	set FILE=%1
 	set BACKUPFILE=%FILE%.backup
 
 	REM If no backup file exist, create one
-
 	IF NOT EXIST "%AVDPATH%%BACKUPFILE%" (
-    	echo [*] create Backup File
-		copy "%AVDPATH%%FILE%" "%AVDPATH%%BACKUPFILE%" >Nul
+    	echo [*] creating Backup File
+
+		IF %COPYASADMIN% (
+			echo [^^!] with elevated write permissions
+			powershell.exe -Command "Start-Process -Wait cmd '/c copy """"%AVDPATH%%FILE%"""" """"%AVDPATH%%BACKUPFILE%""""' -Verb RunAs"
+		) ELSE (
+			copy "%AVDPATH%%FILE%" "%AVDPATH%%BACKUPFILE%" >Nul 2>&1
+		)
+
 		IF EXIST "%AVDPATH%%BACKUPFILE%" (
 			echo [-] Backup File was created
 		)
@@ -307,15 +398,15 @@ exit /B 0
 		echo [-] ADB connection possible
 	) ELSE (
 		echo.%ADBWORKS%| FIND /I "offline">Nul && (
-  			echo [^^!] ADB device is offline
-  			echo [*] no ADB connection possible
-  			call :_Exit 2> nul
+			echo [^^!] ADB device is offline
+			echo [*] no ADB connection possible
+			call :_Exit 2> nul
 		)
 
 		echo.%ADBWORKS%| FIND /I "unauthorized">Nul && (
-  			echo [^^!] %ADBWORKS%
-  			echo [*] no ADB connection possible
-  			call :_Exit 2> nul
+			echo [^^!] %ADBWORKS%
+			echo [*] no ADB connection possible
+			call :_Exit 2> nul
 		)
 
 		echo.%ADBWORKS%| FIND /I "recognized">Nul && (
@@ -335,8 +426,8 @@ exit /B 0
 				call :_Exit 2> nul
 			)
 
-  			echo [^^!] ADB is not in your Path, try to
-  			echo set PATH=%ENVVAR%\!ADB_DIR!;%%PATH%%
+			echo [^^!] ADB is not in your Path, try to
+			echo set PATH=%ENVVAR%\!ADB_DIR!;%%PATH%%
 
 			IF EXIST "!ADB_EX!" (
 				echo [*] setting it, just during this session, for you
@@ -348,14 +439,14 @@ exit /B 0
 
 		echo.%ADBWORKS%| FIND /I "error">Nul && (
 			echo [^^!] %ADBWORKS%
-  			echo [*] no ADB connection possible
-  			call :_Exit 2> nul
+			echo [*] no ADB connection possible
+			call :_Exit 2> nul
 		)
 
 		echo.%ADBWORKS%| FIND /I "no devices/emulators found">Nul && (
 			echo [^^!] %ADBWORKS%
-  			echo [*] no ADB connection possible
-  			call :_Exit 2> nul
+			echo [*] no ADB connection possible
+			call :_Exit 2> nul
 		)
 	)
 	IF EXIST "!ADB_EX!" (
@@ -368,7 +459,13 @@ exit /B 0
 :restore_backups
 	for /f "delims=" %%i in ('dir "%AVDPATH%*.backup" /s /b /a-d') do (
 		echo [^!] Restoring %%~ni%%~xi to %%~ni
-		copy "%%i" "%%~di%%~pi%%~ni" >nul 2>&1
+
+		IF %COPYASADMIN% (
+			echo [^!] with elevated write permissions
+			powershell.exe -Command "Start-Process -Wait cmd '/c copy """"%%i"""" """"%%~di%%~pi%%~ni""""' -Verb RunAs"
+		) ELSE (
+			copy "%%i" "%%~di%%~pi%%~ni" >nul 2>&1
+		)
 	)
 	echo [*] Backups still remain in place
 REM call :_Exit 2> nul
@@ -385,33 +482,50 @@ exit /B 0
 	set InstallPrebuiltKernelModules=%false%
 	set ListAllAVDs=%false%
 	set InstallApps=%false%
+	set UpdateBusyBoxScript=%false%
+	set AddRCscripts=%false%
+	set BLUESTACKS=%false%
+	set toggleRamdisk=%false%
+	set SOURCING=%false%
+	set FAKEBOOTIMG=%false%
 	set NOPARAMSATALL=%false%
+	set COPYASADMIN=%false%
 
 	REM While debugging and developing you can turn this flag on
 	echo.%params%| FIND /I "DEBUG">Nul && (
-  		set DEBUG=%true%
-  		REM Shows whatever line get executed...
-  		REM echo on
+		set DEBUG=%true%
+		REM Shows whatever line get executed...
+		REM echo on
 	)
 
 	REM Call rootAVD with PATCHFSTAB if you want the RAMDISK merge your modded fstab.ranchu before Magisk Mirror gets mounted
 	echo.%params%| FIND /I "PATCHFSTAB">Nul && (
-  		set PATCHFSTAB=%true%
+		set PATCHFSTAB=%true%
 	)
 
 	REM Call rootAVD with GetUSBHPmodZ to download the usbhostpermissons module
 	echo.%params%| FIND /I "GetUSBHPmodZ">Nul && (
-  		set GetUSBHPmodZ=%true%
+		set GetUSBHPmodZ=%true%
 	)
 
 	REM Call rootAVD with ListAllAVDs to show all AVDs with command examples
 	echo.%params%| FIND /I "ListAllAVDs">Nul && (
-  		set ListAllAVDs=%true%
+		set ListAllAVDs=%true%
 	)
 
 	REM Call rootAVD with InstallApps to just install all APKs placed in the Apps folder
 	echo.%params%| FIND /I "InstallApps">Nul && (
-  		set InstallApps=%true%
+		set InstallApps=%true%
+	)
+
+	REM Call rootAVD with UpdateBusyBoxScript to update the BusyBox version within rootAVD.sh
+	echo.%params%| FIND /I "UpdateBusyBoxScript">Nul && (
+		set UpdateBusyBoxScript=%true%
+	)
+
+	REM Call rootAVD with AddRCscripts to add custom *.rc scripts into ramdisk.img/overlay.d/sbin
+	echo.%params%| FIND /I "AddRCscripts">Nul && (
+		set AddRCscripts=%true%
 	)
 
     set RAMDISKIMG=%true%
@@ -424,9 +538,52 @@ exit /B 0
 		set InstallPrebuiltKernelModules=%true%
 	)
 
+	REM Call rootAVD with BLUESTACKS if you want to patch the ramdisk.img of a BlueStacks System
+	echo.%params%| FIND /I "BLUESTACKS">Nul && (
+		set BLUESTACKS=%true%
+		set RAMDISKIMG=%false%
+	)
+
+	REM Call rootAVD with toggleRamdisk if you want to toggle between patched and original ramdisk.img
+	echo.%params%| FIND /I "toggleRamdisk">Nul && (
+		set toggleRamdisk=%true%
+	)
+
+	REM Call rootAVD with SOURCING if you only want to source the shell entrypoint
+	echo.%params%| FIND /I "SOURCING">Nul && (
+		set SOURCING=%true%
+	)
+
+	REM Call rootAVD with FAKEBOOTIMG if you want to create a fake boot.img to patch through Magisk
+	echo.%params%| FIND /I "FAKEBOOTIMG">Nul && (
+		set FAKEBOOTIMG=%true%
+	)
+
 	IF "%params%"=="" (
 		REM No Parameters SET at all
     	set NOPARAMSATALL=%true%
+	)
+exit /B 0
+
+:toggle_Ramdisk
+	set RAMDISKFILE=%AVDPATHWITHRDFFILE%
+	set PATCHEDFILE=%AVDPATHWITHRDFFILE%.patched
+	set BACKUPFILE=%AVDPATHWITHRDFFILE%.backup
+
+	IF NOT EXIST "%BACKUPFILE%" (
+		echo [^^!] we need a valid backup file to proceed
+		exit /B 0
+	)
+
+	echo [-] Toggle Ramdisk
+	IF NOT EXIST "%PATCHEDFILE%" (
+		echo [*] Pushing patched Ramdisk into Stack
+		move /Y "%RAMDISKFILE%" "%PATCHEDFILE%" >Nul 2>&1
+		echo [*] Popping original Ramdisk from Backup
+		copy "%BACKUPFILE%" "%RAMDISKFILE%" >Nul 2>&1
+	) ELSE (
+		echo [*] Popping patched Ramdisk back from Stack
+		move /Y "%PATCHEDFILE%" "%RAMDISKFILE%" >Nul 2>&1
 	)
 exit /B 0
 
@@ -490,7 +647,7 @@ exit /B 0
 	echo 					can be overwritten by setting the ANDROID_HOME variable.
 	echo 					e.g. set ANDROID_HOME=%%USERPROFILE%%\Downloads\sdk
 	echo.
-	echo 	^$API:				25,29,30,31,32,33,34,UpsideDownCake,etc.
+	echo 	^$API:				25,29,30,31,32,33,34,35,36,36.1,etc.
 	echo.
 	echo Options:
 	echo 	restore				restore all existing .backup files, but doesn't delete them
@@ -504,6 +661,10 @@ exit /B 0
 	echo 	InstallPrebuiltKernelModules	download and install an AOSP prebuilt kernel and its modules into ramdisk.img
 	echo 					- similar to InstallKernelModules, but the AVD needs to be online
 	echo.
+	echo 	UpdateBusyBoxScript		update the BusyBox payload embedded in rootAVD.sh
+	echo.
+	echo 	toggleRamdisk			toggle between the patched ramdisk and the stock backup
+	echo.
 	echo Options are exclusive, only one at the time will be processed.
 	echo.
 	echo Extra Arguments:
@@ -514,6 +675,12 @@ exit /B 0
 	echo 					- a custom build Kernel might be necessary
 	echo.
 	echo 	GetUSBHPmodZ			The USB HOST Permissions Module Zip will be downloaded into /sdcard/Download
+	echo.
+	echo 	AddRCscripts			install all custom *.rc scripts, placed in the rootAVD folder, into ramdisk.img/overlay.d/sbin
+	echo.
+	echo 	BLUESTACKS			supported by rootAVD.sh on MacOS, not rootAVD.bat
+	echo.
+	echo 	SOURCING			source the shell entrypoint without starting normal execution
 	echo.
 	echo 	FAKEBOOTIMG			Creates a fake Boot.img file that can directly be patched from the Magisk APP
 	echo 					- Magisk will be launched to patch the fake Boot.img within 60s
@@ -606,6 +773,9 @@ exit /B 0
 		echo rootAVD.bat %%i InstallKernelModules
 		echo rootAVD.bat %%i InstallPrebuiltKernelModules
 		echo rootAVD.bat %%i InstallPrebuiltKernelModules GetUSBHPmodZ PATCHFSTAB DEBUG
+		echo rootAVD.bat %%i AddRCscripts
+		echo rootAVD.bat %%i toggleRamdisk
+		echo rootAVD.bat %%i UpdateBusyBoxScript
 		echo.
 	)
 	ENDLOCAL

@@ -1,0 +1,75 @@
+rootAVD A Script to root AVD by NewBit XDA
+
+Usage:	rootAVD [DIR/ramdisk.img] [OPTIONS] | [EXTRA ARGUMENTS]
+or:	rootAVD [ARGUMENTS]
+
+Arguments:
+	ListAllAVDs			Lists Command Examples for ALL installed AVDs
+
+	InstallApps			Just install all APKs placed in the Apps folder
+
+Main operation mode:
+	DIR				a path to an AVD system-image
+					- must always be the 1st Argument after rootAVD
+	
+ADB Path | Ramdisk DIR | ANDROID_HOME:
+	[M]ac/Darwin:			export PATH=~/Library/Android/sdk/platform-tools:$PATH
+					export PATH=$ANDROID_HOME/platform-tools:$PATH
+					system-images/android-$API/google_apis_playstore/x86_64/
+	
+	[L]inux:			export PATH=~/Android/Sdk/platform-tools:$PATH
+					export PATH=$ANDROID_HOME/platform-tools:$PATH
+					system-images/android-$API/google_apis_playstore/x86_64/
+	
+	[W]indows:			set PATH=%LOCALAPPDATA%\Android\Sdk\platform-tools;%PATH%
+					set PATH=%ANDROID_HOME%\platform-tools;%PATH%
+					system-images\android-$API\google_apis_playstore\x86_64\
+	
+	ANDROID_HOME:			By default, the script uses ~/Library/Android/sdk, to set its Android Home
+					directory, search for AVD system-images and ADB binarys. This behaviour
+					can be overwritten by setting the ANDROID_HOME variable.
+					e.g. export ANDROID_HOME=~/Downloads/sdk
+	
+	$API:				25,29,30,31,32,33,34,35,36,36.1,etc.
+	
+Options:
+	restore				restore all existing .backup files, but doesn't delete them
+					- the AVD doesn't need to be running
+					- no other Argument after will be processed
+	
+	InstallKernelModules		install custom build kernel and its modules into ramdisk.img
+					- kernel (bzImage) and its modules (initramfs.img) are inside rootAVD
+					- both files will be deleted after installation
+	
+	InstallPrebuiltKernelModules	download and install an AOSP prebuilt kernel and its modules into ramdisk.img
+					- similar to InstallKernelModules, but the AVD needs to be online
+	
+	AddRCscripts			install all custom *.rc scripts, placed in the rootAVD folder, into ramdisk.img/overlay.d/sbin
+	
+Options are exclusive, only one at the time will be processed.
+	
+Extra Arguments:
+	DEBUG				Debugging Mode, prevents rootAVD to pull back any patched file
+	
+	PATCHFSTAB			fstab.ranchu will get patched to automount Block Devices like /dev/block/sda1
+					- other entries can be added in the script as well
+					- a custom build Kernel might be necessary
+	
+	GetUSBHPmodZ			The USB HOST Permissions Module Zip will be downloaded into /sdcard/Download
+	
+	FAKEBOOTIMG			Creates a fake Boot.img file that can directly be patched from the Magisk APP
+					- Magisk will be launched to patch the fake Boot.img within 60s
+					- the fake Boot.img will be placed under /sdcard/Download/fakeboot.img
+	
+Extra Commands can be combined, there is no particular order.
+	
+Notes: rootAVD will
+- always create .backup files of ramdisk.img and kernel-ranchu
+- replace both when done patching
+- show a Menu, to choose the Magisk Version (Stable || Canary, if the AVD is online
+- make the choosen Magisk Version to its local
+- install all APKs placed in the Apps folder
+Command Examples:
+./rootAVD.sh
+./rootAVD.sh ListAllAVDs
+./rootAVD.sh InstallApps

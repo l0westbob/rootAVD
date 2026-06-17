@@ -1,0 +1,16 @@
+adb.sh
+apps.sh
+args.sh
+backups.sh
+bluestacks.sh
+bluestacks_loader_template.sh
+bootstrap.sh
+help.sh
+kernel_modules.sh
+log.sh
+magisk_downloads.sh
+magisk_prepare.sh
+main.sh
+platform.sh
+ramdisk.sh
+ramdisk_fake_boot.sh

@@ -1,5 +1,8 @@
 .DS_Store
+.idea/
 Apps/*
+!Apps/.gitkeep
+dist/
 initramfs.img
 bzImage
 *.rc
